@@ -1,0 +1,256 @@
+<div x-data="{ tab: 'write', editMode: 'interactive', drawer: null }" class="space-y-4">
+  <!-- Tab bar -->
+  <div class="bg-white border border-gray-200 rounded-xl p-1.5 flex flex-wrap gap-1">
+    <template x-for="t in [
+        {id:'write',label:'Writing Room'},
+        {id:'competitors',label:'Competitors & Gaps'},
+        {id:'detector',label:'Zero AI Analytics'},
+        {id:'audit',label:'SEO Audit'}]" :key="t.id">
+      <button type="button" @click="tab = t.id"
+              :class="tab === t.id ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'"
+              class="px-4 py-2 rounded-lg text-sm font-medium" x-text="t.label"></button>
+    </template>
+  </div>
+
+  <!-- 1. Writing Room -->
+  <div x-show="tab === 'write'" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div class="p-3 bg-white border rounded-lg">
+        <p class="text-2xs font-bold uppercase text-gray-400">URL Slug</p>
+        <code class="text-xs">/{{ content.slug }}</code>
+      </div>
+      <div class="p-3 bg-white border rounded-lg">
+        <p class="text-2xs font-bold uppercase text-gray-400">Meta Description</p>
+        <p class="text-xs text-gray-600">{{ content.metaDescription }}</p>
+      </div>
+      <div class="p-3 bg-white border rounded-lg">
+        <p class="text-2xs font-bold uppercase text-gray-400">Google News Heading</p>
+        <p class="text-xs text-gray-700">{{ content.googleNewsHeading }}</p>
+      </div>
+      <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+        <p class="text-2xs font-bold uppercase text-indigo-500">Unique Angle</p>
+        <p class="text-xs text-indigo-900">{{ content.uniqueAngleAdded }}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div class="xl:col-span-2 bg-white border rounded-xl p-5">
+        <div class="flex justify-between items-center border-b pb-2 mb-3">
+          <h3 class="font-semibold">SEO Humanized Copy</h3>
+          <div class="flex gap-1 text-xs">
+            <button type="button" @click="editMode='interactive'"
+                    :class="editMode==='interactive' ? 'bg-gray-900 text-white' : 'bg-gray-100'"
+                    class="px-2 py-1 rounded">Interactive</button>
+            <button type="button" @click="editMode='raw'"
+                    :class="editMode==='raw' ? 'bg-gray-900 text-white' : 'bg-gray-100'"
+                    class="px-2 py-1 rounded">Raw Markdown</button>
+          </div>
+        </div>
+
+        <!-- Interactive view -->
+        <div x-show="editMode==='interactive'" id="interactive-content"
+             class="prose prose-sm max-w-none leading-relaxed">
+          {% for block in blocks %}
+            {% if block.kind == 'heading' %}
+              <h{{ block.level }} class="font-bold mt-3">{{ block.text }}</h{{ block.level }}>
+            {% elif block.kind == 'bullet' %}
+              <li class="ml-5 list-disc">{{ block.text }}</li>
+            {% elif block.kind == 'paragraph' %}
+              <p class="my-2">
+                {% for sentence in block.sentences %}
+                  {% set flag = (ai.flagged | selectattr('text', 'equalto', sentence) | first) %}
+                  {% if flag %}
+                    <span class="bg-amber-100 hover:bg-amber-200 rounded cursor-pointer px-0.5"
+                          @click="drawer = {{ flag | tojson | forceescape }}">{{ sentence }}</span>
+                  {% else %}
+                    <span>{{ sentence }}</span>
+                  {% endif %}
+                {% endfor %}
+              </p>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <!-- Raw view -->
+        <textarea x-show="editMode==='raw'" id="raw-markdown"
+                  class="w-full h-96 font-mono text-xs border rounded p-2">{{ markdown }}</textarea>
+
+        <div class="flex gap-3 mt-3 text-xs">
+          <button type="button" onclick="copyContent()"
+                  class="px-3 py-1.5 bg-gray-100 rounded">Copy</button>
+          <button type="button" onclick="downloadContent()"
+                  class="px-3 py-1.5 bg-gray-100 rounded">Download .md</button>
+          <span class="text-gray-400 self-center">Words: {{ content.wordCount }}</span>
+        </div>
+      </div>
+
+      <!-- Density + outline sidebar -->
+      <div class="space-y-4">
+        <!-- Humanizer drawer -->
+        <div x-show="drawer" class="bg-gray-900 text-white rounded-xl p-4 space-y-3">
+          <div class="flex justify-between">
+            <h4 class="font-semibold">Sentence Humanizer</h4>
+            <button type="button" @click="drawer = null" class="text-xs">✕</button>
+          </div>
+          <p class="text-xs italic bg-gray-800 p-2 rounded" x-text="drawer?.text"></p>
+          <form hx-post="/humanize-sentence" hx-target="#humanize-result">
+            <input type="hidden" name="sentence" :value="drawer?.text" />
+            <button type="submit"
+                    class="w-full py-2 bg-white text-gray-900 rounded text-xs font-semibold">
+              Run Colloquial Optimizer
+            </button>
+          </form>
+          <div id="humanize-result"></div>
+        </div>
+
+        <div class="bg-white border rounded-xl p-4">
+          <h4 class="font-semibold text-sm border-b pb-2 mb-2">Keyword Densities
+            (target ~{{ target_density }}%)</h4>
+          {% for row in density_table %}
+          <div class="py-1.5 border-b last:border-0">
+            <div class="flex justify-between text-xs">
+              <span class="font-mono">"{{ row.keyword }}"</span>
+              <span class="font-semibold
+                {% if row.status=='Perfect' %}text-emerald-600
+                {% elif row.status=='Over-stuffed' %}text-rose-600
+                {% else %}text-amber-600{% endif %}">{{ row.status }}</span>
+            </div>
+            <p class="text-2xs text-gray-500">{{ row.count }}× — {{ row.density }}%</p>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="bg-white border rounded-xl p-4">
+          <h4 class="font-semibold text-sm border-b pb-2 mb-2">Structural Outline</h4>
+          {% for h in content.headingsList %}
+          <div class="text-xs py-0.5" style="padding-left: {{ (h.level - 1) * 12 }}px">
+            <span class="font-mono text-gray-400">H{{ h.level }}</span> {{ h.text }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Competitors & Gaps -->
+  <div x-show="tab === 'competitors'" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {% for c in competitors %}
+      <div class="bg-white border rounded-xl p-4 space-y-2">
+        <p class="text-2xs font-bold text-gray-400">RANKED RESULT {{ loop.index }}</p>
+        <h4 class="font-bold">{{ c.name }}</h4>
+        <a href="{{ c.url }}" target="_blank" rel="noopener"
+           class="text-xs text-blue-600 break-all">{{ c.url }}</a>
+        <p class="text-xs"><strong>{{ c.wordCount }}</strong> words —
+          {{ c.structuralPattern }}</p>
+        <p class="text-2xs font-semibold uppercase text-emerald-600">Strengths</p>
+        <ul class="text-xs list-disc ml-4">
+          {% for s in c.strengths %}<li>{{ s }}</li>{% endfor %}
+        </ul>
+        <p class="text-2xs font-semibold uppercase text-amber-600">Weaknesses</p>
+        <ul class="text-xs list-disc ml-4">
+          {% for w in c.weaknesses %}<li>{{ w }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="bg-white border rounded-xl p-5">
+      <h4 class="font-bold mb-3">Opportunities &amp; Gaps</h4>
+      <table class="w-full text-left text-sm">
+        <thead><tr class="text-xs uppercase text-gray-400 border-b">
+          <th class="py-2">Gap</th><th>Priority</th><th>Description</th><th>Subheadings</th>
+        </tr></thead>
+        <tbody>
+          {% for g in gaps %}
+          <tr class="border-b">
+            <td class="py-3 font-bold">{{ g.title }}</td>
+            <td><span class="text-2xs px-2 py-0.5 rounded border">{{ g.importance }}</span></td>
+            <td class="text-xs text-gray-500">{{ g.description }}</td>
+            <td class="text-2xs font-mono">
+              {% for s in g.recommendedSubheadings %}{{ s }}{% if not loop.last %} · {% endif %}{% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 3. Zero AI Analytics -->
+  <div x-show="tab === 'detector'" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white border rounded-xl p-5 text-center">
+        <p class="text-xs uppercase text-gray-500">AI Probability</p>
+        <p class="text-5xl font-bold mt-3
+          {% if ai.score > 65 %}text-red-600
+          {% elif ai.score > 35 %}text-amber-600
+          {% else %}text-emerald-600{% endif %}">{{ ai.score }}%</p>
+        <p class="text-xs text-gray-500 mt-3 italic">{{ ai.message }}</p>
+      </div>
+      <div class="bg-white border rounded-xl p-5 text-center">
+        <p class="text-xs uppercase text-gray-500">Perplexity</p>
+        <p class="text-4xl font-semibold mt-3">{{ ai.perplexity }}/100</p>
+      </div>
+      <div class="bg-white border rounded-xl p-5 text-center">
+        <p class="text-xs uppercase text-gray-500">Burstiness</p>
+        <p class="text-4xl font-semibold mt-3">{{ ai.burstiness }}/100</p>
+      </div>
+    </div>
+    <div class="bg-white border rounded-xl p-5">
+      <div class="flex justify-between items-center mb-3">
+        <h4 class="font-bold">AI Cliché Finder</h4>
+        {% if ai.cliches %}
+        <button type="button" onclick="clearCliches(this)"
+                data-cliches='{{ ai.cliches | tojson }}'
+                class="text-xs px-3 py-1.5 bg-gray-900 text-white rounded">
+          Replace All Clichés
+        </button>
+        {% endif %}
+      </div>
+      {% if ai.cliches %}
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {% for c in ai.cliches %}
+        <div class="p-2 border rounded text-xs">
+          <strong>{{ c.word }}</strong> ({{ c.count }}×)
+          <span class="block text-emerald-600">→ {{ c.alternatives.split(',')[0] }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-sm text-gray-500">No common AI clichés found. Clean copy.</p>
+      {% endif %}
+    </div>
+    <div class="bg-white border rounded-xl p-5">
+      <h4 class="font-bold mb-3">Flagged Sentences</h4>
+      {% for f in ai.flagged %}
+      <div class="p-3 border rounded-lg mb-2 cursor-pointer hover:border-gray-400"
+           @click="tab='write'; drawer = {{ f | tojson | forceescape }}">
+        <p class="text-2xs font-mono uppercase">{{ f.category }} — likeness {{ f.score }}%</p>
+        <p class="text-sm italic">"{{ f.text }}"</p>
+        <p class="text-xs text-gray-400">{{ f.reason }}</p>
+      </div>
+      {% else %}
+      <p class="text-sm text-gray-500">No sentences flagged.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 4. SEO Audit -->
+  <div x-show="tab === 'audit'" class="space-y-3">
+    <div class="bg-white border rounded-xl p-5">
+      <h4 class="font-bold mb-3">Google Helpful Content Audit</h4>
+      {% for rec in audit %}
+      <div class="p-3 border rounded-lg mb-2
+        {% if rec.status=='pass' %}border-emerald-200 bg-emerald-50/30
+        {% else %}border-amber-200 bg-amber-50/30{% endif %}">
+        <div class="flex justify-between">
+          <strong class="text-sm">{{ rec.criteria }}</strong>
+          <span class="text-2xs uppercase">{{ rec.status }}</span>
+        </div>
+        <p class="text-xs text-gray-500">{{ rec.description }}</p>
+        <p class="text-2xs text-gray-400 italic mt-1">Rule: {{ rec.guideline }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>

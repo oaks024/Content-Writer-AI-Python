@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Writer AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <script defer src="/static/app.js"></script>
+  <style>
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: block; }
+    .htmx-request.htmx-indicator { display: block; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center space-x-3">
+    <div class="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-yellow-400 font-bold">CW</div>
+    <div>
+      <h1 class="text-xl font-bold">Content Writer AI</h1>
+      <p class="text-xs text-gray-500">SEO Auditor &amp; Zero-GPT Humanizer — Python Edition</p>
+    </div>
+  </header>
+  {% block body %}{% endblock %}
+</body>
+</html>

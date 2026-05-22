@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="flex flex-col lg:flex-row">
+  <aside class="w-full lg:w-[400px] bg-white border-r border-gray-200 p-6 space-y-4">
+    <h2 class="font-semibold text-gray-800 border-b pb-2">SEO Configuration</h2>
+    {% if not has_api_key %}
+    <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
+      <strong>GROQ_API_KEY missing.</strong> Add it to the server's environment.
+      Get a free key at console.groq.com/keys
+    </div>
+    {% endif %}
+    <form hx-post="/analyze-and-write" hx-target="#workspace" hx-indicator="#loading"
+          class="space-y-3">
+      <label class="block text-xs font-semibold uppercase text-gray-600">Company / Brand
+        <input name="company_name" type="text" placeholder="e.g., EcoHeat HVAC"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Content Type
+        <select name="content_type" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          <option value="blog">Blog Post</option>
+          <option value="website">Website Page</option>
+        </select>
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Page Title / Topic Goal *
+        <input name="page_title" type="text" required placeholder="e.g., Guide to Geothermal Heating"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Primary Keywords
+        <input name="primary_keywords" type="text" placeholder="comma, separated"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Secondary Keywords
+        <input name="secondary_keywords" type="text" placeholder="comma, separated"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">LSI Keywords
+        <input name="lsi_keywords" type="text" placeholder="comma, separated"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Tone
+        <input name="tone" type="text" value="Professional"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Audience
+        <input name="audience" type="text" value="General Buyers"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Target Word Count
+        <input name="target_word_count" type="number" value="1500" min="400" max="3000"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <label class="block text-xs font-semibold uppercase text-gray-600">Target Density (%)
+        <input name="target_density" type="number" value="1.2" step="0.1" min="0.5" max="3.0"
+               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+      </label>
+      <button type="submit"
+              class="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-medium">
+        Analyze &amp; Write Humanized Content
+      </button>
+      <p id="loading" class="htmx-indicator text-center text-sm text-gray-500">
+        Analyzing competitors and drafting content… (15-30s)
+      </p>
+    </form>
+  </aside>
+  <main id="workspace" class="flex-1 p-6">
+    <div class="flex items-center justify-center h-full text-center text-gray-400 py-20">
+      <div>
+        <h3 class="text-2xl font-bold text-gray-700">SEO Content Blueprint Room</h3>
+        <p class="mt-2 text-sm">Fill the form and generate competitor analysis,
+          humanized copy, and a Zero-AI report.</p>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
