@@ -40,3 +40,8 @@ def test_markdown_to_blocks_classifies_lines():
     assert "heading" in kinds
     assert "paragraph" in kinds
     assert "bullet" in kinds
+
+
+def test_count_words_ignores_markdown_punctuation():
+    assert analysis.count_words("# Title\n\nOne two three four five.") == 6
+    assert analysis.count_words("") == 0

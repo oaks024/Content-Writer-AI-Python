@@ -147,6 +147,11 @@ def overall_ai_score(flagged: list[dict], heuristics: dict) -> tuple[int, str]:
     return score, message
 
 
+def count_words(text: str) -> int:
+    """Count real word tokens, ignoring markdown punctuation."""
+    return len(re.findall(r"\b\w+\b", text))
+
+
 def markdown_to_blocks(markdown: str) -> list[dict]:
     """Split markdown into renderable blocks for the interactive editor.
 

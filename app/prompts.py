@@ -31,64 +31,98 @@ Return a valid JSON object with this schema:
 }}'''
 
 
-def builder_prompt(*, page_title: str, company: str, content_type: str,
+def article_prompt(*, page_title: str, company: str, content_type: str,
                    primary: list[str], secondary: list[str], lsi: list[str],
                    tone: str, audience: str, word_count: int,
                    density: float, search_summary: str) -> str:
-    """The large prompt that produces the full structured JSON result."""
-    strategy = ("Value-Driven Authority Blog Post" if content_type == "blog"
-                else "High-Converting Website Copy")
-    return f'''You are a master Google SEO Content Architect.
-Competitive search analysis context:
-- Company/Client: "{company or "the Client"}"
-- Target Page Title: "{page_title}"
-- Content Strategy: "{strategy}"
-- PRIMARY KEYWORDS: {", ".join(primary)} (place the primary keyword in the
-  introduction, conclusion, and at least one subheading)
-- SECONDARY KEYWORDS: {", ".join(secondary)}
-- LSI KEYWORDS: {", ".join(lsi)}
-- Writing Tone: "{tone or "conversational, human, approachable"}"
-- Target Audience: "{audience or "general buyers seeking value"}"
-- Target Word Count: {word_count} words
-- Target Keyword Density: {density}% (natural, no keyword stuffing)
+    """Dedicated prompt that produces ONLY the long-form Markdown article.
 
-REAL-WORLD SEARCH INSIGHTS:
+    Isolating the article in its own call is what makes the model write the
+    full requested length instead of abbreviating it inside a large JSON.
+    """
+    strategy = ("an in-depth, value-driven blog post" if content_type == "blog"
+                else "high-converting website page copy")
+    faq_rule = (
+        "- End with exactly 5 FAQs under an H2 'Frequently Asked Questions'; "
+        "each answer must be 30-40 words.\n"
+        if content_type == "blog" else "")
+    return f'''Write {strategy} of AT LEAST {word_count} words on the topic below.
+This length is a HARD REQUIREMENT. The finished article MUST reach at least
+{word_count} words. Do not stop early. Do not write an outline or a summary —
+write the entire, fully developed article.
+
+TOPIC / TITLE GOAL: "{page_title}"
+COMPANY / BRAND: "{company or "the client"}"
+PRIMARY KEYWORDS: {", ".join(primary) or "(none)"}
+SECONDARY KEYWORDS: {", ".join(secondary) or "(none)"}
+LSI KEYWORDS: {", ".join(lsi) or "(none)"}
+TONE: {tone or "professional, clear, human"}
+AUDIENCE: {audience or "general readers"}
+PRIMARY KEYWORD DENSITY: about {density}% — natural, never stuffed.
+
+COMPETITIVE INSIGHTS TO BEAT:
 {search_summary}
 
-RULES:
-1. Never use these AI words: delve, embark, navigate, dive, tapestry,
-   pivotal, demystify, furthermore, moreover, crucial, elevate.
-2. Short sentences, plain words, active voice, concise paragraphs.
-3. Explain what makes {company or "us"} genuinely different and helpful.
-4. If a blog post, include exactly 5 FAQs; each answer 30-40 words.
-5. Provide SEO fields: title, slug, metaDescription, googleNewsHeading,
-   uniqueAngleAdded.
+REQUIREMENTS:
+- Output ONLY the article as clean Markdown. No preamble, no JSON, no commentary.
+- Start with one H1 title, then use H2 and H3 subheadings throughout.
+- Put the primary keyword in the H1, the introduction, at least one H2, and
+  the conclusion.
+- Short sentences, plain words, active voice, concise paragraphs.
+- Develop every section fully with specific, useful detail and examples.
+- Never use these AI-cliche words: delve, embark, navigate, dive, tapestry,
+  pivotal, demystify, furthermore, moreover, crucial, elevate.
+{faq_rule}Write the complete article now. Minimum {word_count} words.'''
 
-Return a SINGLE valid JSON object with exactly these keys:
+
+def analysis_prompt(*, page_title: str, company: str, primary: list[str],
+                    secondary: list[str], lsi: list[str], article: str,
+                    search_summary: str) -> str:
+    """Prompt that analyzes an already-written article into a compact JSON.
+
+    Carries no long-form content, so this JSON is small and reliable.
+    """
+    return f'''You are an SEO analyst. A finished article is provided below.
+Analyze it and its competitive landscape.
+
+TOPIC: "{page_title}"
+COMPANY: "{company or "the client"}"
+PRIMARY KEYWORDS: {", ".join(primary) or "(none)"}
+SECONDARY KEYWORDS: {", ".join(secondary) or "(none)"}
+LSI KEYWORDS: {", ".join(lsi) or "(none)"}
+
+COMPETITIVE INSIGHTS:
+{search_summary}
+
+THE ARTICLE:
+"""
+{article}
+"""
+
+Return a SINGLE valid JSON object, no markdown fences, with exactly these keys:
 {{
   "competitors": [
-    {{"name": "", "url": "", "wordCount": 1100, "headings": [],
-      "keywordDensity": {{"primary": 1.2}}, "strengths": [],
-      "weaknesses": [], "structuralPattern": ""}}
+    3 objects: {{"name": "", "url": "", "wordCount": 1100,
+      "structuralPattern": "", "strengths": [], "weaknesses": []}}
   ],
   "gaps": [
-    {{"title": "", "description": "", "importance": "High",
-      "recommendedSubheadings": []}}
+    3 objects: {{"title": "", "description": "",
+      "importance": "High|Medium|Low", "recommendedSubheadings": []}}
   ],
-  "generatedContent": {{
-    "title": "", "slug": "", "metaDescription": "",
-    "googleNewsHeading": "", "uniqueAngleAdded": "",
-    "markdown": "# Heading...", "wordCount": 1500,
-    "headingsList": [{{"level": 1, "text": ""}}]
+  "seo": {{
+    "title": "click-worthy SEO title for THE ARTICLE",
+    "slug": "lowercase-hyphenated-url-slug",
+    "metaDescription": "compelling meta description under 160 chars",
+    "googleNewsHeading": "news-style headline",
+    "uniqueAngleAdded": "one sentence on what makes this article different"
   }},
   "flaggedSentences": [
-    {{"text": "", "score": 85, "category": "robotic",
+    up to 3 objects, each "text" an EXACT sentence copied from THE ARTICLE:
+    {{"text": "", "score": 70, "category": "robotic|warning",
       "reason": "", "suggestions": []}}
   ],
   "auditRecommendations": [
-    {{"id": "originality", "criteria": "", "status": "pass",
+    exactly 5 objects: {{"id": "", "criteria": "", "status": "pass|warn",
       "description": "", "guideline": ""}}
   ]
-}}
-competitors must have exactly 3 items, gaps exactly 3, auditRecommendations
-exactly 5. Output ONLY the JSON object, no markdown fences.'''
+}}'''

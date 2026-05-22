@@ -1,9 +1,12 @@
 """Groq API wrapper: client creation, model fallback, retry, error formatting."""
+import logging
 import time
 
 from groq import Groq
 
 from app import config
+
+logger = logging.getLogger("content_writer")
 
 # Fallback chain of currently-active Groq models, best first.
 MODELS: list[str] = [
@@ -54,10 +57,12 @@ def format_groq_error(error: Exception,
 
 
 def safe_generate(prompt: str, json_mode: bool = False,
-                  temperature: float | None = None) -> str:
+                  temperature: float | None = None,
+                  max_tokens: int | None = None) -> str:
     """Run a completion against the model-fallback chain. Returns the text.
 
     Raises the last error if every model fails. Auth errors short-circuit.
+    Logs the finishing reason so truncated responses are visible.
     """
     client = get_client()
     last_error: Exception | None = None
@@ -70,13 +75,24 @@ def safe_generate(prompt: str, json_mode: bool = False,
             }
             if temperature is not None:
                 options["temperature"] = temperature
+            if max_tokens is not None:
+                options["max_tokens"] = max_tokens
             if json_mode:
                 options["response_format"] = {"type": "json_object"}
 
             response = retry_with_backoff(
                 lambda opts=options: client.chat.completions.create(**opts)
             )
-            return response.choices[0].message.content or ""
+            choice = response.choices[0]
+            content = choice.message.content or ""
+            finish = getattr(choice, "finish_reason", None)
+            logger.info("Groq model=%s finish_reason=%s chars=%d",
+                        model, finish, len(content))
+            if finish == "length":
+                logger.warning(
+                    "Groq output for model=%s hit the token limit; "
+                    "increase max_tokens.", model)
+            return content
         except Exception as error:  # noqa: BLE001
             last_error = error
             if any(m in str(error).lower() for m in _AUTH_MARKERS):
