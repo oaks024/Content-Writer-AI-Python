@@ -68,6 +68,12 @@ REQUIREMENTS:
 - Start with one H1 title, then use H2 and H3 subheadings throughout.
 - Put the primary keyword in the H1, the introduction, at least one H2, and
   the conclusion.
+- Weave EVERY secondary keyword into the body naturally — each one must
+  appear at least once in a subheading or sentence where it actually fits.
+- Sprinkle the LSI keywords throughout the article to demonstrate topical
+  depth and semantic coverage; use most of them at least once.
+- All keyword placements must read naturally — never list, stuff, or
+  shoehorn. If a keyword doesn't fit, rephrase the sentence around it.
 - Short sentences, plain words, active voice, concise paragraphs.
 - Develop every section fully with specific, useful detail and examples.
 - Never use these AI-cliche words: delve, embark, navigate, dive, tapestry,
@@ -110,7 +116,8 @@ Return a SINGLE valid JSON object, no markdown fences, with exactly these keys:
       "importance": "High|Medium|Low", "recommendedSubheadings": []}}
   ],
   "seo": {{
-    "title": "click-worthy SEO title for THE ARTICLE",
+    "metaTitle": "HTML <title> tag content, 50-60 characters, primary keyword near the front, compelling for search results",
+    "title": "click-worthy SEO title for THE ARTICLE (can match metaTitle or be a longer variant)",
     "slug": "lowercase-hyphenated-url-slug",
     "metaDescription": "compelling meta description under 160 chars",
     "googleNewsHeading": "news-style headline",

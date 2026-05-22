@@ -14,7 +14,11 @@
 
   <!-- 1. Writing Room -->
   <div x-show="tab === 'write'" class="space-y-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+      <div class="p-3 bg-white border rounded-lg">
+        <p class="text-2xs font-bold uppercase text-gray-400">Meta Title</p>
+        <p class="text-xs font-semibold text-gray-800 leading-snug">{{ content.metaTitle }}</p>
+      </div>
       <div class="p-3 bg-white border rounded-lg">
         <p class="text-2xs font-bold uppercase text-gray-400">URL Slug</p>
         <code class="text-xs">/{{ content.slug }}</code>

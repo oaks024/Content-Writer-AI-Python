@@ -147,6 +147,7 @@ def analyze_and_write(
     blocks = analysis.markdown_to_blocks(markdown)
     seo = result.get("seo", {})
     content = {
+        "metaTitle": seo.get("metaTitle") or seo.get("title") or page_title,
         "title": seo.get("title") or page_title,
         "slug": seo.get("slug", ""),
         "metaDescription": seo.get("metaDescription", ""),
