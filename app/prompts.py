@@ -59,6 +59,8 @@ LSI KEYWORDS: {", ".join(lsi) or "(none)"}
 TONE: {tone or "professional, clear, human"}
 AUDIENCE: {audience or "general readers"}
 PRIMARY KEYWORD DENSITY: about {density}% — natural, never stuffed.
+(The density target applies to the PRIMARY keyword ONLY — secondary and
+ LSI keywords follow the fixed-count rules below, not a density.)
 
 COMPETITIVE INSIGHTS TO BEAT:
 {search_summary}
@@ -66,14 +68,21 @@ COMPETITIVE INSIGHTS TO BEAT:
 REQUIREMENTS:
 - Output ONLY the article as clean Markdown. No preamble, no JSON, no commentary.
 - Start with one H1 title, then use H2 and H3 subheadings throughout.
-- Put the primary keyword in the H1, the introduction, at least one H2, and
-  the conclusion.
-- Weave EVERY secondary keyword into the body naturally — each one must
-  appear at least once in a subheading or sentence where it actually fits.
-- Sprinkle the LSI keywords throughout the article to demonstrate topical
-  depth and semantic coverage; use most of them at least once.
+- PRIMARY KEYWORD: place in the H1, the introduction, at least one H2, and
+  the conclusion. Hit roughly {density}% density across the body.
+- SECONDARY KEYWORDS: every secondary keyword listed above MUST appear
+  exactly 1 or 2 times in the whole article — no more, no less, no zero.
+  Place each one in a subheading or sentence where it fits naturally.
+  Do NOT chase a density percentage for these.
+- LSI KEYWORDS: each LSI keyword should appear 1 or 2 times naturally
+  across the article to signal topical depth. Do NOT exceed 2 occurrences
+  per LSI keyword.
 - All keyword placements must read naturally — never list, stuff, or
-  shoehorn. If a keyword doesn't fit, rephrase the sentence around it.
+  shoehorn. If a keyword doesn't fit a section, rephrase the section to
+  accommodate it rather than dropping it.
+- Before finishing, mentally check the article and confirm that every
+  secondary keyword and every LSI keyword listed above has been used
+  1 or 2 times. If any is missing, revise to include it.
 - Short sentences, plain words, active voice, concise paragraphs.
 - Develop every section fully with specific, useful detail and examples.
 - Never use these AI-cliche words: delve, embark, navigate, dive, tapestry,
