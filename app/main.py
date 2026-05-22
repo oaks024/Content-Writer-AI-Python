@@ -42,7 +42,7 @@ def _parse_json(text: str) -> dict:
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(
-        "index.html", {"request": request, "has_api_key": config.has_api_key()}
+        request, "index.html", {"has_api_key": config.has_api_key()}
     )
 
 
@@ -120,7 +120,6 @@ def analyze_and_write(
     score, message = analysis.overall_ai_score(flagged, heuristics)
 
     context = {
-        "request": request,
         "competitors": result.get("competitors", []),
         "gaps": result.get("gaps", []),
         "content": content,
@@ -137,7 +136,7 @@ def analyze_and_write(
         },
         "target_density": target_density,
     }
-    return templates.TemplateResponse("partials/results.html", context)
+    return templates.TemplateResponse(request, "partials/results.html", context)
 
 
 @app.post("/humanize-sentence", response_class=HTMLResponse)
@@ -153,8 +152,7 @@ def humanize_sentence(request: Request, sentence: str = Form("")):
     except Exception as error:  # noqa: BLE001
         return _error(request, format_groq_error(error, "Failed to edit sentence."))
 
-    return templates.TemplateResponse("partials/humanize.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "partials/humanize.html", {
         "original": data.get("originalText", sentence),
         "humanized": data.get("humanizedText", sentence),
         "improved_score": data.get("improvedScore", 15),
@@ -164,4 +162,4 @@ def humanize_sentence(request: Request, sentence: str = Form("")):
 
 def _error(request: Request, message: str) -> HTMLResponse:
     return templates.TemplateResponse(
-        "partials/error.html", {"request": request, "message": message})
+        request, "partials/error.html", {"message": message})
